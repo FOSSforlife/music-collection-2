@@ -87,6 +87,9 @@ model User {
 
 model Artist {
   id            Int               @id @default(autoincrement())
+  spotifyId     String?
+  mbid          String?
+  rymId         String?
   name          String
   bio           String?
   formedYear    Int?
@@ -124,16 +127,19 @@ model UserFollowers {
 }
 
 model Album {
-  id            Int             @id @default(autoincrement())
-  title         String
-  releaseDate   DateTime?
-  artistId      Int
-  artist        Artist          @relation(fields: [artistId], references: [id])
-  reviews       Review[]
-  albumTags     AlbumTags[]
-  genres        Genre[]         @relation("AlbumGenres")
-  albumRatings  UserRating[]
-  PlaylistAlbum PlaylistAlbum[]
+  id           Int          @id @default(autoincrement())
+  spotifyId    String?
+  mbid         String?
+  rymId        String?
+  title        String
+  releaseDate  DateTime?
+  artistId     Int
+  artist       Artist       @relation(fields: [artistId], references: [id])
+  rating       Float?
+  reviews      Review[]
+  albumTags    AlbumTags[]
+  genres       Genre[]      @relation("AlbumGenres")
+  albumRatings UserRating[]
 }
 
 model AlbumTags {
@@ -143,6 +149,35 @@ model AlbumTags {
   tagId   Int
 
   @@id([albumId, tagId])
+}
+
+model Track {
+  id        Int     @id @default(autoincrement())
+  spotifyId String?
+  mbid      String?
+
+  // Spotify attributes
+  bpm              Int?
+  key              Int?
+  energy           Float?
+  danceability     Float?
+  valence          Float?
+  acousticness     Float?
+  instrumentalness Float?
+  liveness         Float?
+  speechiness      Float?
+  loudness         Float?
+  mode             Int?
+  popularity       Float?
+  playlists        PlaylistTrack[]
+
+  // Personal attributes
+  // https://docs.google.com/spreadsheets/d/1047bTLoO9xALovFXo-Z7V_BlY4NluLUkuLEPWmTNg68/edit#gid=0
+  experimental Float? // hyperpop, glitch, etc.
+  edm          Float? // rave music, fun, not angry
+  cool         Float? // trap feel
+  metal        Float? // appealing to metalheads, not poppy
+  notes        String?
 }
 
 model Review {
@@ -212,7 +247,7 @@ model Playlist {
   name      String
   userId    String
   user      User            @relation(fields: [userId], references: [id])
-  albums    PlaylistAlbum[]
+  tracks    PlaylistTrack[]
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
 }
@@ -230,11 +265,12 @@ model Message {
 
 // Intermediate models for many-to-many relations
 
-model PlaylistAlbum {
+model PlaylistTrack {
   playlistId Int
   playlist   Playlist @relation(fields: [playlistId], references: [id])
   albumId    Int
-  album      Album    @relation(fields: [albumId], references: [id])
+  track      Track    @relation(fields: [albumId], references: [id])
+  addedAt    DateTime
 
   @@id([playlistId, albumId])
 }
