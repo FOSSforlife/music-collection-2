@@ -1,0 +1,240 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
+  // Further reading:
+  // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
+  // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
+  url      = env("DATABASE_URL")
+}
+
+model Post {
+  id        Int      @id @default(autoincrement())
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdById String
+
+  @@index([name])
+}
+
+// Necessary for Next auth
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model User {
+  id               String            @id @default(cuid())
+  username         String            @unique
+  email            String            @unique
+  emailVerified    DateTime?
+  password         String
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  reviews          Review[]
+  userRatings      UserRating[]
+  userGenres       UserGenre[]
+  followedArtists  ArtistFollowers[]
+  followers        UserFollowers[]   @relation("Follower")
+  following        UserFollowers[]   @relation("Following")
+  image            String?
+  accounts         Account[]
+  sessions         Session[]
+  posts            Post[]
+  Comment          Comment[]
+  Playlist         Playlist[]
+  messagesSent     Message[]         @relation("UserSender")
+  messagesReceived Message[]         @relation("UserReceiver")
+}
+
+model Artist {
+  id            Int               @id @default(autoincrement())
+  name          String
+  bio           String?
+  formedYear    Int?
+  disbandedYear Int?
+  albums        Album[]
+  artistTags    ArtistTags[]
+  followers     ArtistFollowers[]
+}
+
+model ArtistTags {
+  artist   Artist @relation(fields: [artistId], references: [id])
+  artistId Int
+  tag      Tag    @relation(fields: [tagId], references: [id])
+  tagId    Int
+
+  @@id([artistId, tagId])
+}
+
+model ArtistFollowers {
+  user     User   @relation(fields: [userId], references: [id])
+  userId   String
+  artist   Artist @relation(fields: [artistId], references: [id])
+  artistId Int
+
+  @@id([userId, artistId])
+}
+
+model UserFollowers {
+  follower    User   @relation("Follower", fields: [followerId], references: [id])
+  followerId  String
+  following   User   @relation("Following", fields: [followingId], references: [id])
+  followingId String
+
+  @@id([followerId, followingId])
+}
+
+model Album {
+  id            Int             @id @default(autoincrement())
+  title         String
+  releaseDate   DateTime?
+  artistId      Int
+  artist        Artist          @relation(fields: [artistId], references: [id])
+  reviews       Review[]
+  albumTags     AlbumTags[]
+  genres        Genre[]         @relation("AlbumGenres")
+  albumRatings  UserRating[]
+  PlaylistAlbum PlaylistAlbum[]
+}
+
+model AlbumTags {
+  album   Album @relation(fields: [albumId], references: [id])
+  albumId Int
+  tag     Tag   @relation(fields: [tagId], references: [id])
+  tagId   Int
+
+  @@id([albumId, tagId])
+}
+
+model Review {
+  id        Int       @id @default(autoincrement())
+  title     String
+  content   String
+  rating    Float
+  albumId   Int
+  album     Album     @relation(fields: [albumId], references: [id])
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  Comment   Comment[]
+}
+
+model Tag {
+  id      Int          @id @default(autoincrement())
+  name    String       @unique
+  albums  AlbumTags[]
+  artists ArtistTags[]
+}
+
+model Genre {
+  id         Int         @id @default(autoincrement())
+  name       String      @unique
+  albums     Album[]     @relation("AlbumGenres")
+  userGenres UserGenre[]
+}
+
+model UserRating {
+  id      Int    @id @default(autoincrement())
+  rating  Float
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+  albumId Int
+  album   Album  @relation(fields: [albumId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserGenre {
+  id              Int    @id @default(autoincrement())
+  userId          String
+  user            User   @relation(fields: [userId], references: [id])
+  genreId         Int
+  genre           Genre  @relation(fields: [genreId], references: [id])
+  preferenceLevel Float
+}
+
+// Additional models for extended functionality
+
+model Comment {
+  id        Int      @id @default(autoincrement())
+  content   String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  reviewId  Int
+  review    Review   @relation(fields: [reviewId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Playlist {
+  id        Int             @id @default(autoincrement())
+  name      String
+  userId    String
+  user      User            @relation(fields: [userId], references: [id])
+  albums    PlaylistAlbum[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+model Message {
+  id         Int      @id @default(autoincrement())
+  content    String
+  senderId   String
+  sender     User     @relation("UserSender", fields: [senderId], references: [id])
+  receiverId String
+  receiver   User     @relation("UserReceiver", fields: [receiverId], references: [id])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// Intermediate models for many-to-many relations
+
+model PlaylistAlbum {
+  playlistId Int
+  playlist   Playlist @relation(fields: [playlistId], references: [id])
+  albumId    Int
+  album      Album    @relation(fields: [albumId], references: [id])
+
+  @@id([playlistId, albumId])
+}
