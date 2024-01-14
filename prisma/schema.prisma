@@ -86,7 +86,7 @@ model User {
 }
 
 model Artist {
-  id            Int               @id @default(autoincrement())
+  id            String            @id
   spotifyId     String?
   mbid          String?
   rymId         String?
@@ -94,14 +94,15 @@ model Artist {
   bio           String?
   formedYear    Int?
   disbandedYear Int?
-  albums        Album[]
+  albums        AlbumArtist[]
   artistTags    ArtistTags[]
   followers     ArtistFollowers[]
+  tracks        ArtistTrack[]
 }
 
 model ArtistTags {
   artist   Artist @relation(fields: [artistId], references: [id])
-  artistId Int
+  artistId String
   tag      Tag    @relation(fields: [tagId], references: [id])
   tagId    Int
 
@@ -112,7 +113,7 @@ model ArtistFollowers {
   user     User   @relation(fields: [userId], references: [id])
   userId   String
   artist   Artist @relation(fields: [artistId], references: [id])
-  artistId Int
+  artistId String
 
   @@id([userId, artistId])
 }
@@ -127,19 +128,28 @@ model UserFollowers {
 }
 
 model Album {
-  id           Int          @id @default(autoincrement())
+  id           Int           @id @default(autoincrement())
   spotifyId    String?
   mbid         String?
   rymId        String?
   title        String
   releaseDate  DateTime?
-  artistId     Int
-  artist       Artist       @relation(fields: [artistId], references: [id])
+  artists      AlbumArtist[]
   rating       Float?
   reviews      Review[]
   albumTags    AlbumTags[]
-  genres       Genre[]      @relation("AlbumGenres")
+  genres       Genre[]       @relation("AlbumGenres")
   albumRatings UserRating[]
+  tracks       AlbumTrack[]
+}
+
+model AlbumArtist {
+  albumId  Int
+  album    Album  @relation(fields: [albumId], references: [id])
+  artistId String
+  artist   Artist @relation(fields: [artistId], references: [id])
+
+  @@id([albumId, artistId])
 }
 
 model AlbumTags {
@@ -152,9 +162,12 @@ model AlbumTags {
 }
 
 model Track {
-  id        Int     @id @default(autoincrement())
+  id        Int           @id @default(autoincrement())
+  name      String
   spotifyId String?
   mbid      String?
+  artists   ArtistTrack[]
+  albums    AlbumTrack[]
 
   // Spotify attributes
   bpm              Int?
@@ -173,11 +186,30 @@ model Track {
 
   // Personal attributes
   // https://docs.google.com/spreadsheets/d/1047bTLoO9xALovFXo-Z7V_BlY4NluLUkuLEPWmTNg68/edit#gid=0
-  experimental Float? // hyperpop, glitch, etc.
-  edm          Float? // rave music, fun, not angry
-  cool         Float? // trap feel
-  metal        Float? // appealing to metalheads, not poppy
-  notes        String?
+  hyper     Float? // hyperpop, glitch, etc.
+  rave      Float? // rave music, fun, not angry
+  coolness  Float? // trap feel
+  heaviness Float? // appealing to metalheads, not poppy
+  notes     String?
+}
+
+model AlbumTrack {
+  albumId  Int
+  album    Album @relation(fields: [albumId], references: [id])
+  trackId  Int
+  track    Track @relation(fields: [trackId], references: [id])
+  position Int
+
+  @@id([albumId, trackId])
+}
+
+model ArtistTrack {
+  artistId String
+  artist   Artist @relation(fields: [artistId], references: [id])
+  trackId  Int
+  track    Track  @relation(fields: [trackId], references: [id])
+
+  @@id([artistId, trackId])
 }
 
 model Review {

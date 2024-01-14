@@ -1,11 +1,16 @@
 import { SpotifyApi } from "@spotify/web-api-ts-sdk";
 import type * as Spotify from "@spotify/web-api-ts-sdk";
 
-interface SpotifyTrack {
-  id: string;
+export interface SpotifyTrack {
+  spotifyId: string;
   name: string;
-  artist: string;
-  album: string;
+  artists: Array<string>;
+  album: {
+    spotifyId: string;
+    artists: Array<string>;
+    name: string;
+    position: number;
+  };
   duration: number;
   dateAdded: Date;
   bpm: number;
@@ -32,7 +37,6 @@ interface PlaylistSearchItem {
   name: string;
   dateUpdated: Date;
   public: boolean;
-  uri: string;
 }
 
 interface PlaylistedTrackNonEpisode extends Spotify.PlaylistedTrack {
@@ -53,17 +57,13 @@ export interface SpotifyServiceInterface {
 }
 
 export class SpotifyService implements SpotifyServiceInterface {
-  constructor(
-    private client = SpotifyApi.withAccessToken(
+  private client: SpotifyApi;
+  constructor(accessToken: Spotify.AccessToken) {
+    this.client = SpotifyApi.withAccessToken(
       process.env.SPOTIFY_CLIENT_ID!,
-      {
-        access_token: process.env.SPOTIFY_ACCESS_TOKEN!,
-        token_type: "",
-        expires_in: 0,
-        refresh_token: process.env.SPOTIFY_REFRESH_TOKEN!,
-      },
-    ),
-  ) {}
+      accessToken,
+    );
+  }
 
   async getPlaylists(
     limit?: Spotify.MaxInt<50>,
@@ -99,10 +99,15 @@ export class SpotifyService implements SpotifyServiceInterface {
       tracksResult.push({
         addedAt: new Date(track.added_at),
         track: {
-          id: track.track.id,
+          spotifyId: track.track.id,
           name: track.track.name,
-          artist: track.track.artists[0]!.name, // TODO: handle multiple artists
-          album: track.track.album.name,
+          artists: track.track.artists.map((artist) => artist.name),
+          album: {
+            artists: track.track.album.artists.map((artist) => artist.name),
+            name: track.track.album.name,
+            spotifyId: track.track.album.id,
+            position: track.track.track_number,
+          },
           duration: track.track.duration_ms,
           dateAdded: new Date(track.added_at),
           bpm: audioFeatures.tempo,
@@ -123,4 +128,6 @@ export class SpotifyService implements SpotifyServiceInterface {
 
     return tracksResult;
   }
+
+  // static async getAccessToken(code: string): Promise<string> {}
 }

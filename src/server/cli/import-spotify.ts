@@ -1,12 +1,21 @@
 import "dotenv/config";
 import { SpotifyService } from "../services/spotify";
+import spotifyToken from "../../../spotify-token.json";
+import { TrackService } from "../services/tracks";
+import { db } from "~/server/db";
+import { saveTrack } from "../utils/saveTrack";
+import { ArtistService } from "../services/artists";
+import { AlbumService } from "../services/albums";
 
 async function main() {
   if (!process.env.SPOTIFY_CLIENT_ID) {
     console.error("Dotenv failed");
   }
 
-  const spotifyService = new SpotifyService();
+  const spotifyService = new SpotifyService(spotifyToken);
+  const trackService = new TrackService();
+  const artistService = new ArtistService();
+  const albumService = new AlbumService();
   // 1. Get all playlists from Spotify
   const playlists = await spotifyService.getPlaylists(1);
 
@@ -17,8 +26,12 @@ async function main() {
 
     // 2.2 For each track:
     for (const playlistItem of playlistItems) {
-      // 2.2.1 Add the track to the database
-      console.log(playlistItem);
+      await saveTrack(
+        playlistItem.track,
+        artistService,
+        albumService,
+        trackService,
+      );
     }
   }
 }
