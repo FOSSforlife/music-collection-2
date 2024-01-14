@@ -17,12 +17,15 @@ async function main() {
   const artistService = new ArtistService();
   const albumService = new AlbumService();
   // 1. Get all playlists from Spotify
-  const playlists = await spotifyService.getPlaylists(1);
+  const playlists = await spotifyService.getPlaylists(10);
 
   // 2. For each playlist:
   for (const playlist of playlists) {
     // 2.1 Get all tracks from the playlist
-    const playlistItems = await spotifyService.getPlaylistItems(playlist.id, 1);
+    const playlistItems = await spotifyService.getPlaylistItems(
+      playlist.id,
+      30,
+    );
 
     // 2.2 For each track:
     for (const playlistItem of playlistItems) {
@@ -31,6 +34,7 @@ async function main() {
         artistService,
         albumService,
         trackService,
+        playlist,
       );
     }
   }

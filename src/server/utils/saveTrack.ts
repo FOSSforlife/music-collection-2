@@ -3,13 +3,15 @@ import type { AlbumServiceInterface } from "../services/albums";
 import type { TrackServiceInterface } from "../services/tracks";
 import type { TrackInfo } from "../types/tracks";
 import { generateArtistId } from "./generateArtistId";
-import type { Artist } from "@prisma/client";
+import type { Artist, Prisma } from "@prisma/client";
+import { PlaylistSearchItem } from "../services/spotify";
 
 export async function saveTrack(
   trackInfo: TrackInfo,
   artistService: ArtistServiceInterface,
   albumService: AlbumServiceInterface,
   trackService: TrackServiceInterface,
+  playlist?: PlaylistSearchItem,
 ) {
   // If track exists, return
   if (
@@ -69,6 +71,10 @@ export async function saveTrack(
       },
     });
 
+    let playlists: Prisma.TrackCreateInput["playlists"] | undefined = undefined;
+    if (playlist) {
+    }
+
     await trackService.createTrack({
       name: trackInfo.name,
       spotifyId: trackInfo.spotifyId,
@@ -78,6 +84,7 @@ export async function saveTrack(
           position: trackInfo.album.position,
         },
       },
+      playlists,
     });
   }
 }

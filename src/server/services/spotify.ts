@@ -11,8 +11,8 @@ export interface SpotifyTrack {
     name: string;
     position: number;
   };
+  dateAdded?: Date;
   duration: number;
-  dateAdded: Date;
   bpm: number;
   key: number;
   energy: number;
@@ -32,7 +32,7 @@ interface PlaylistItem {
   track: SpotifyTrack;
 }
 
-interface PlaylistSearchItem {
+export interface PlaylistSearchItem {
   id: string;
   name: string;
   dateUpdated: Date;

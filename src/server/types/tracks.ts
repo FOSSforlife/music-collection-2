@@ -1,3 +1,7 @@
-import { SpotifyTrack } from "../services/spotify";
+import type { SpotifyTrack } from "../services/spotify";
 
-type TrackInfo = SpotifyTrack; // TODO: combine with Last.fm, RYM, and others
+interface TrackSaveData {
+  playlistDbId?: number;
+}
+
+export type TrackInfo = SpotifyTrack & TrackSaveData; // TODO: combine with Last.fm, RYM, and others

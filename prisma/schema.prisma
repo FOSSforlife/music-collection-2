@@ -278,6 +278,7 @@ model Playlist {
   id        Int             @id @default(autoincrement())
   name      String
   userId    String
+  spotifyId String?
   user      User            @relation(fields: [userId], references: [id])
   tracks    PlaylistTrack[]
   createdAt DateTime        @default(now())
@@ -300,9 +301,9 @@ model Message {
 model PlaylistTrack {
   playlistId Int
   playlist   Playlist @relation(fields: [playlistId], references: [id])
-  albumId    Int
-  track      Track    @relation(fields: [albumId], references: [id])
+  trackId    Int
+  track      Track    @relation(fields: [trackId], references: [id])
   addedAt    DateTime
 
-  @@id([playlistId, albumId])
+  @@id([playlistId, trackId])
 }
