@@ -1,5 +1,5 @@
-import { SpotifyApi } from "@spotify/web-api-ts-sdk";
-import type * as Spotify from "@spotify/web-api-ts-sdk";
+import { SpotifyApi } from '@spotify/web-api-ts-sdk';
+import type * as Spotify from '@spotify/web-api-ts-sdk';
 
 export interface SpotifyTrack {
   spotifyId: string;
@@ -46,7 +46,7 @@ interface PlaylistedTrackNonEpisode extends Spotify.PlaylistedTrack {
 const SpotifyPlaylistItemIsTrack = (
   playlistedTrack: Spotify.PlaylistedTrack,
 ): playlistedTrack is PlaylistedTrackNonEpisode => {
-  return "album" in playlistedTrack.track;
+  return 'album' in playlistedTrack.track;
 };
 
 export interface SpotifyServiceInterface {
@@ -57,17 +57,21 @@ export interface SpotifyServiceInterface {
 }
 
 export class SpotifyService implements SpotifyServiceInterface {
-  private client: SpotifyApi;
-  constructor(accessToken: Spotify.AccessToken) {
-    this.client = SpotifyApi.withAccessToken(
+  private client?: SpotifyApi;
+
+  async init() {
+    this.client = SpotifyApi.withUserAuthorization(
       process.env.SPOTIFY_CLIENT_ID!,
-      accessToken,
+      'http://localhost:3000/api/spotify/callback',
+      ['playlist-read-private', 'playlist-read-collaborative'],
     );
   }
 
   async getPlaylists(
     limit?: Spotify.MaxInt<50>,
   ): Promise<PlaylistSearchItem[]> {
+    if (!this.client) throw new Error('Spotify client not initialized');
+
     const playlists = await this.client.currentUser.playlists.playlists(limit);
 
     return playlists.items.map((playlist) => ({
@@ -83,6 +87,8 @@ export class SpotifyService implements SpotifyServiceInterface {
     playlistId: string,
     limit?: Spotify.MaxInt<50>,
   ): Promise<Array<PlaylistItem>> {
+    if (!this.client) throw new Error('Spotify client not initialized');
+
     const tracks = await this.client.playlists.getPlaylistItems(
       playlistId,
       undefined,
